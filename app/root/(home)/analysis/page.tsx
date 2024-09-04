@@ -38,7 +38,7 @@ export default function Page() {
 
 		try {
 			const response = await fetch(
-				`https://interviewmate-atie.onrender.com/partialD`,
+				`${process.env.NEXT_PUBLIC_WS}/partialD`,
 				{
 					// const response = await fetch("http://localhost:8000/partialD", {
 					method: "POST",

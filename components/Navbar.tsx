@@ -15,11 +15,11 @@ const Navbar = () => {
 					src="/icons/logo.svg"
 					width={32}
 					height={32}
-					alt="interview mate logo"
+					alt="Kaizen.ai logo"
 					className="max-sm:size-10"
 				/>
 				<p className="text-[26px] font-extrabold  max-sm:hidden">
-					Interview Mate
+					Kaizen.ai
 				</p>
 			</Link>
 			<div className="flex justify-between gap-5">

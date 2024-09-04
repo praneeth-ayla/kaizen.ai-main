@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-	title: "Interview Mate",
+	title: "Kaizen.ai",
 	description: "With you before, during and after interview",
 	icons: {
 		icon: ["/favicon.ico"],

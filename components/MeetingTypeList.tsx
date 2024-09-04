@@ -71,7 +71,7 @@ const MeetingTypeList = () => {
 				try {
 					const response = await fetch(
 						// "http://localhost:8000/setDescription",
-						"https://interviewmate-atie.onrender.com/setDescription",
+						process.env.NEXT_PUBLIC_WS + "/setDescription",
 						{
 							method: "POST",
 							headers: {
@@ -129,7 +129,8 @@ const MeetingTypeList = () => {
 			try {
 				const response = await fetch(
 					// "http://localhost:8000/setDescription",
-					"https://interviewmate-atie.onrender.com/setDescription",
+					// "https://interviewmate-atie.onrender.com/setDescription",
+					process.env.NEXT_PUBLIC_WS + "/setDescription",
 					{
 						method: "POST",
 						headers: {
@@ -153,7 +154,8 @@ const MeetingTypeList = () => {
 
 			fetch(
 				// "http://localhost:8000/setDescription",
-				"https://interviewmate-atie.onrender.com/setDescription",
+				// "https://interviewmate-atie.onrender.com/setDescription",
+				process.env.NEXT_PUBLIC_WS + "/setDescription",
 				{
 					method: "POST",
 					body: JSON.stringify({

@@ -91,7 +91,7 @@ export default function MockInterviewComp() {
 	async function getMockDetails() {
 		try {
 			const response = await fetch(
-				`https://interviewmate-atie.onrender.com/meetingD`,
+				process.env.NEXT_PUBLIC_WS + "/meetingD",
 				{
 					method: "POST",
 					headers: {

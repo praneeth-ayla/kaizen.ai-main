@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
-	title: "Interview Mate",
+	title: "Kaizen.ai",
 	description: "With You Before, During and After Interview.",
 };
 
