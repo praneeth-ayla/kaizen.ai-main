@@ -3,7 +3,6 @@ import { useSendSpeech } from "@/hooks/useSendSpeech";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
-import PreviousQuestions from "./PreviousQuestions";
 import Image from "next/image";
 import useSpeechRecognition from "@/hooks/UseSpeechMock";
 
@@ -14,9 +13,13 @@ export default function MockInterviewComp() {
 	const { needQuestions } = useSendSpeech();
 	const [loading, setLoading] = useState(false);
 	const [previousQuestions, setPreviousQuestions] = useState<string[]>([]); // Use an array
+	const [total, setTotal] = useState(0);
 	const [count, setCount] = useState(0);
 	const router = useRouter();
 	const [isMuted, setIsMuted] = useState(false);
+	const [autoClickInterval, setAutoClickInterval] = useState<ReturnType<
+		typeof setInterval
+	> | null>(null);
 
 	const {
 		hasRecognitionSupport,
@@ -86,6 +89,12 @@ export default function MockInterviewComp() {
 		setTimeout(() => {
 			speak(questions[count + 1]);
 		}, 400);
+
+		// Reset the interval when the button is clicked
+		if (autoClickInterval) {
+			clearInterval(autoClickInterval);
+			setAutoClickInterval(null);
+		}
 	}
 
 	async function getMockDetails() {
@@ -112,6 +121,9 @@ export default function MockInterviewComp() {
 		}
 	}
 
+	async function handleEnd() {
+		router.push("/home");
+	}
 	useEffect(() => {
 		if (!hasRecognitionSupport) {
 			alert("Speech recognition is not supported in this browser.");
@@ -122,6 +134,24 @@ export default function MockInterviewComp() {
 			}, 100);
 		}
 		getMockDetails();
+
+		// Set up the interval to automatically click the button if not clicked in 5 minutes
+		const interval = setInterval(() => {
+			const button = document.querySelector(
+				"button"
+			) as HTMLButtonElement;
+			if (button && !loading && questions.length > 0) {
+				button.click();
+			}
+		}, 5 * 60 * 1000); // 5 minutes
+
+		setAutoClickInterval(interval);
+
+		return () => {
+			if (autoClickInterval) {
+				clearInterval(autoClickInterval);
+			}
+		};
 	}, []);
 
 	function speak(question: string) {
@@ -137,40 +167,23 @@ export default function MockInterviewComp() {
 	}
 
 	return (
-		<div className="pt-20 px-10 sm:px-20 md:px-40 lg:px-20 xl:px-60 flex flex-col justify-between h-screen">
+		<div className="pt-20 px-10 sm:px-20 md:px-40 lg:px-20 xl:px-60">
 			<div>
-				<div className="text-4xl font-bold pb-1">Mock Interview</div>
 				<div>
 					Id:{" "}
 					<span className="text-muted-foreground">
-						{mockId.slice(16)}
+						{mockId.slice(14)}
 					</span>
 				</div>
-				<div
-					className="text-lg mt-5"
-					title={mockDetails?.description}>
-					<span className="font-bold">Description:</span>{" "}
-					{mockDetails?.description.length > 100 ? (
-						<>{mockDetails?.description.slice(0, 100)}...</>
-					) : (
-						<>{mockDetails?.description}</>
-					)}
-				</div>
-				<div className="flex h-96 lg:gap-10 lg:justify-between mt-5">
-					<div className="flex justify-center items-center w-full lg:w-2/3 rounded-lg">
+				<div className="flex justify-between items-center mt-5 h-[50vh] w-full">
+					<div className="flex justify-center items-center w-full rounded-lg">
 						<Image
 							alt="bot image"
 							src="/images/bot.png"
 							height={300}
 							width={300}></Image>
 					</div>
-					<div className="hidden lg:block w-1/3 h-80 rounded-lg">
-						<div className="font-bold mb-2">Previous Questions</div>
-						<PreviousQuestions
-							previousQuestions={previousQuestions}
-						/>
-					</div>
-				</div>
+				</div>{" "}
 				<div className="flex justify-between gap-4 mt-10">
 					<div>
 						<div className="font-bold">Question:</div>
@@ -182,42 +195,54 @@ export default function MockInterviewComp() {
 							{questions[count]}
 						</div>
 					</div>
-					<Button
-						disabled={loading}
-						className={loading ? "px-10" : ""}
-						onClick={() => {
-							{
-								questions.length === 0
-									? handleWhenEmpty()
-									: handleNext();
-							}
-						}}>
-						{!loading ? (
-							<>
-								{questions.length === 0
-									? "Generate Question"
-									: "Next Question"}
-							</>
-						) : (
-							<Image
-								src="/icons/loading-circle.svg"
-								alt="Loading..."
-								width={35}
-								height={35}
-							/>
-						)}
-					</Button>
+					{total < 10 ? (
+						<Button
+							disabled={loading}
+							className={loading ? "px-10" : ""}
+							onClick={() => {
+								setTotal(total + 1);
+								// {
+								// 	questions.length === 0
+								// 		? handleWhenEmpty()
+								// 		: handleNext();
+								// }
+							}}>
+							{!loading ? (
+								<>
+									{questions.length === 0
+										? "Generate Question"
+										: "Next Question"}
+								</>
+							) : (
+								<Image
+									src="/icons/loading-circle.svg"
+									alt="Loading..."
+									width={35}
+									height={35}
+								/>
+							)}
+						</Button>
+					) : (
+						<Button
+							disabled={loading}
+							variant="destructive"
+							className={loading ? "px-10" : ""}
+							onClick={() => {
+								handleEnd();
+							}}>
+							{!loading ? (
+								<>End Meeting</>
+							) : (
+								<Image
+									src="/icons/loading-circle.svg"
+									alt="Loading..."
+									width={35}
+									height={35}
+								/>
+							)}
+						</Button>
+					)}
 				</div>
-			</div>
-			<div className="flex justify-center mt-10 pb-3 space-x-4">
-				<Button
-					className="bg-red-500 text-white px-4 py-2"
-					onClick={() => {
-						router.push("/home");
-						stopListening();
-					}}>
-					End Interview
-				</Button>
 			</div>
 		</div>
 	);
