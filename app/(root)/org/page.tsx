@@ -45,12 +45,12 @@ export default function Page() {
 				<CardTitle className="p-8 m-2 text-5xl font-bold text-center">
 					Organisation: {data.org.name}
 				</CardTitle>
-				<CardContent className="text-center text-2xl">
-					<div className="text-lg">
+				<CardContent>
+					<div className="text-center text-lg mb-20">
 						Last Updated:{" "}
 						{DateTimeDisplay(data.org.updatedAt).slice(0, 10)}
 					</div>
-					<div>{data.org.description}</div>
+					<pre className="font-sans">{data.org.description}</pre>
 				</CardContent>
 			</Card>
 			<Card className="p-10 mx-2 my-2 grid grid-cols-3 gap-10">
@@ -58,13 +58,19 @@ export default function Page() {
 					<Link
 						key={i}
 						href={`/role?id=${role.id}`}
-						className="grid">
+						className="grid min-h-96">
 						<Card className="hover:shadow-lg   bg-opacity-50 p-4 flex flex-col h-full">
-							<CardTitle className="mb-2 text-lg font-bold text-wrap text-center">
+							<CardTitle className="mb-5 text-lg flex justify-between px-3 font-bold text-wrap">
 								{role.name}
+								<div className="text-muted-foreground font-light">
+									{DateTimeDisplay(role.updatedAt).slice(
+										0,
+										10
+									)}
+								</div>
 							</CardTitle>
 							<CardDescription className="flex-grow">
-								<div className="text-xs">
+								<div>
 									{role.description.length > 200 ? (
 										<>
 											{role.description.slice(0, 200)} ...

@@ -9,13 +9,15 @@ import useSpeechRecognition from "@/hooks/UseSpeechMock";
 export default function MockInterviewComp() {
 	const mockId = usePathname();
 	const [mockDetails, setMockDetails] = useState<any>();
-	const [questions, setQuestions] = useState<string[]>([]); // Use an array
+	const [questions, setQuestions] = useState<string[]>([]);
 	const { needQuestions } = useSendSpeech();
 	const [loading, setLoading] = useState(false);
-	const [previousQuestions, setPreviousQuestions] = useState<string[]>([]); // Use an array
+	const [previousQuestions, setPreviousQuestions] = useState<string[]>([]);
 	const [total, setTotal] = useState(0);
 	const [count, setCount] = useState(0);
+	const [timer, setTimer] = useState(300); // 5 minutes in seconds
 	const router = useRouter();
+	const [isSpeaking, setIsSpeaking] = useState("/listening.mp4");
 	const [isMuted, setIsMuted] = useState(false);
 	const [autoClickInterval, setAutoClickInterval] = useState<ReturnType<
 		typeof setInterval
@@ -31,9 +33,62 @@ export default function MockInterviewComp() {
 	} = useSpeechRecognition(isMuted);
 	const { sendWS } = useSendSpeech();
 
+	useEffect(() => {
+		if (!hasRecognitionSupport) {
+			alert("Speech recognition is not supported in this browser.");
+		}
+		getMockDetails();
+
+		// Set up the interval to automatically click the button if not clicked in 5 minutes
+		const interval = setInterval(() => {
+			const button = document.querySelector(
+				"button"
+			) as HTMLButtonElement;
+			if (button && !loading && questions.length > 0) {
+				button.click();
+			}
+		}, 5 * 60 * 1000); // 5 minutes
+
+		setAutoClickInterval(interval);
+
+		return () => {
+			if (autoClickInterval) {
+				clearInterval(autoClickInterval);
+			}
+		};
+	}, []);
+
+	useEffect(() => {
+		let timerInterval: ReturnType<typeof setInterval> | null = null;
+
+		if (timer > 0 && count < questions.length) {
+			timerInterval = setInterval(() => {
+				setTimer((prev) => prev - 1);
+			}, 1000);
+		} else if (timer === 0) {
+			handleNext();
+		}
+
+		return () => {
+			if (timerInterval) {
+				clearInterval(timerInterval);
+			}
+		};
+	}, [timer, count]);
+
+	function speak(question: string) {
+		const utterance = new SpeechSynthesisUtterance(question);
+		utterance.onstart = () => setIsSpeaking("/speaking.mp4");
+		utterance.onend = () => setIsSpeaking("/listening.mp4");
+
+		const voices = speechSynthesis.getVoices();
+		utterance.voice = voices[3]; // Choose a specific voice
+
+		speechSynthesis.speak(utterance);
+	}
+
 	function handleWhenEmpty() {
 		startListening();
-		console.warn("started listening");
 		setLoading(true);
 		needQuestions(mockId, "empty")
 			.then((questions) => {
@@ -42,6 +97,7 @@ export default function MockInterviewComp() {
 				setLoading(false);
 				setTimeout(() => {
 					speak(questions[count + 1]);
+					setTimer(300); // Reset timer
 				}, 200);
 			})
 			.catch((error) => {
@@ -58,6 +114,7 @@ export default function MockInterviewComp() {
 				setQuestions(questionArray);
 				setLoading(false);
 				setCount(0);
+				setTimer(300); // Reset timer
 			})
 			.catch((error) => {
 				console.error("Error fetching questions:", error);
@@ -81,16 +138,15 @@ export default function MockInterviewComp() {
 		if (count === 4) {
 			handleQuestionReq();
 		} else {
-			// Append new questions to previousQuestions
 			setCount((c) => c + 1);
 		}
 		setPreviousQuestions((prev) => [...prev, questions[count]]);
 
 		setTimeout(() => {
 			speak(questions[count + 1]);
+			setTimer(300); // Reset timer
 		}, 400);
 
-		// Reset the interval when the button is clicked
 		if (autoClickInterval) {
 			clearInterval(autoClickInterval);
 			setAutoClickInterval(null);
@@ -124,47 +180,6 @@ export default function MockInterviewComp() {
 	async function handleEnd() {
 		router.push("/home");
 	}
-	useEffect(() => {
-		if (!hasRecognitionSupport) {
-			alert("Speech recognition is not supported in this browser.");
-		}
-		if (text !== "") {
-			setInterval(() => {
-				startListening();
-			}, 100);
-		}
-		getMockDetails();
-
-		// Set up the interval to automatically click the button if not clicked in 5 minutes
-		const interval = setInterval(() => {
-			const button = document.querySelector(
-				"button"
-			) as HTMLButtonElement;
-			if (button && !loading && questions.length > 0) {
-				button.click();
-			}
-		}, 5 * 60 * 1000); // 5 minutes
-
-		setAutoClickInterval(interval);
-
-		return () => {
-			if (autoClickInterval) {
-				clearInterval(autoClickInterval);
-			}
-		};
-	}, []);
-
-	function speak(question: string) {
-		// Create a SpeechSynthesisUtterance
-		const utterance = new SpeechSynthesisUtterance(question);
-
-		// Select a voice
-		const voices = speechSynthesis.getVoices();
-		utterance.voice = voices[3]; // Choose a specific voice
-
-		// Speak the text
-		speechSynthesis.speak(utterance);
-	}
 
 	return (
 		<div className="pt-20 px-10 sm:px-20 md:px-40 lg:px-20 xl:px-60">
@@ -177,13 +192,20 @@ export default function MockInterviewComp() {
 				</div>
 				<div className="flex justify-between items-center mt-5 h-[50vh] w-full">
 					<div className="flex justify-center items-center w-full rounded-lg">
-						<Image
-							alt="bot image"
-							src="/images/bot.png"
+						<video
+							src={isSpeaking || ""}
+							controls={false}
+							autoPlay
+							playsInline
+							className="object-cover object-center"
+							loop
+							muted
 							height={300}
-							width={300}></Image>
+							width={300}></video>
 					</div>
-				</div>{" "}
+				</div>
+				Time Left: {Math.floor(timer / 60)}:
+				{("0" + (timer % 60)).slice(-2)}
 				<div className="flex justify-between gap-4 mt-10">
 					<div>
 						<div className="font-bold">Question:</div>
@@ -201,11 +223,12 @@ export default function MockInterviewComp() {
 							className={loading ? "px-10" : ""}
 							onClick={() => {
 								setTotal(total + 1);
-								// {
-								// 	questions.length === 0
-								// 		? handleWhenEmpty()
-								// 		: handleNext();
-								// }
+								setIsSpeaking("/speaking.mp4");
+								{
+									questions.length === 0
+										? handleWhenEmpty()
+										: handleNext();
+								}
 							}}>
 							{!loading ? (
 								<>

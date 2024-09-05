@@ -34,7 +34,7 @@ export default function Home() {
 					<Link
 						key={index}
 						href={`/org?id=${org.id}`}
-						className="grid">
+						className="flex">
 						<Card className="hover:shadow-lg   bg-opacity-50 p-4 flex flex-col h-full">
 							<div className="object-cover flex justify-center items-center">
 								<img
